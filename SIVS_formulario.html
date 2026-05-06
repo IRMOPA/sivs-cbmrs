@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SIVS — Sistema Institucional de Valor Salvo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{--red:#c0392b;--red-dk:#922b21;--red-lt:rgba(192,57,43,0.1);--bg:#f0f2f5;--white:#fff;--dark:#1a1f2e;--mid:#2c3248;--text:#1a1f2e;--muted:#6b7280;--border:#dde1ea;--green:#16a34a;--yellow:#d97706;--shadow:0 2px 20px rgba(0,0,0,0.08);--radius:10px;}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.page-header{background:var(--dark);border-bottom:4px solid var(--red);padding:0 32px;display:flex;align-items:stretch;position:sticky;top:0;z-index:300;}
+.header-stripe{background:var(--red);width:6px;margin-right:20px;flex-shrink:0;}
+.header-body{display:flex;align-items:center;gap:16px;padding:14px 0;flex:1;}
+.header-logo{width:46px;height:46px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.header-title h1{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:900;color:#fff;letter-spacing:.5px;line-height:1.1;}
+.header-title p{font-size:10px;color:#8892a4;margin-top:2px;letter-spacing:.5px;text-transform:uppercase;}
+.header-badge{margin-left:auto;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 14px;font-size:11px;color:#8892a4;text-align:right;}
+.header-badge strong{display:block;color:#fff;font-size:13px;}
+.progress-wrap{background:var(--dark);padding:0 32px 16px;}
+.progress-steps{display:flex;gap:4px;}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;}
+.step-circle{width:28px;height:28px;border-radius:50%;border:2px solid #3a4055;background:transparent;color:#8892a4;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .25s;}
+.step.active .step-circle{border-color:var(--red);background:var(--red);color:#fff;}
+.step.done .step-circle{border-color:var(--green);background:var(--green);color:#fff;}
+.step-label{font-size:10px;color:#8892a4;text-align:center;line-height:1.2;}
+.step.active .step-label{color:#fff;}.step.done .step-label{color:#4ade80;}
+.step-line{height:2px;flex:1;background:#3a4055;margin-top:13px;align-self:flex-start;transition:background .3s;}
+.step-line.done{background:var(--green);}
+.form-container{max-width:960px;margin:28px auto;padding:0 20px 80px;}
+.section-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden;display:none;animation:fadeUp .3s ease;}
+.section-card.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.card-header{background:var(--dark);padding:15px 24px;display:flex;align-items:center;gap:12px;}
+.card-header .icon{font-size:19px;}.card-header h2{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#fff;}
+.card-header .step-tag{margin-left:auto;background:rgba(255,255,255,0.1);border-radius:4px;padding:2px 8px;font-size:11px;color:#8892a4;}
+.card-body{padding:24px;}
+.field-grid{display:grid;gap:18px;}.field-grid.cols-2{grid-template-columns:1fr 1fr;}.field-grid.cols-3{grid-template-columns:1fr 1fr 1fr;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.field label .req{color:var(--red);}
+.field input,.field select{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'Barlow',sans-serif;font-size:14px;color:var(--text);background:#fff;transition:border-color .2s,box-shadow .2s;outline:none;}
+.field input:focus,.field select:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt);}
+.field input.error{border-color:#e74c3c;background:#fff5f5;}
+.field input[readonly]{background:#f0fdf4;color:var(--green);font-weight:700;cursor:default;border-color:#bbf7d0;}
+.field input[readonly]:focus{box-shadow:none;}
+.field .hint{font-size:11px;color:var(--muted);}
+.auto-badge{display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;color:var(--green);}
+.radio-group{display:flex;flex-wrap:wrap;gap:8px;}
+.radio-opt{display:flex;align-items:center;gap:7px;border:1.5px solid var(--border);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;transition:all .2s;user-select:none;}
+.radio-opt input[type=radio]{display:none;}
+.radio-opt:has(input:checked){border-color:var(--red);background:var(--red-lt);color:var(--red);font-weight:600;}
+.radio-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);transition:all .2s;flex-shrink:0;}
+.radio-opt:has(input:checked) .radio-dot{border-color:var(--red);background:var(--red);}
+.obitos-grid{background:#fff8f8;border:1.5px solid #fde8e8;border-radius:8px;padding:16px;}
+.obitos-grid h4{font-size:11px;color:var(--red);font-weight:700;margin-bottom:12px;letter-spacing:.5px;text-transform:uppercase;}
+.divider{height:1px;background:var(--border);margin:22px 0;}
+.map-wrapper{border-radius:10px;overflow:hidden;border:2px solid #2c3248;box-shadow:0 6px 32px rgba(0,0,0,0.2);position:relative;background:#1a1f2e;}
+.map-overlay-search{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:1000;width:clamp(260px,55%,480px);display:flex;border-radius:8px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.5);}
+.map-overlay-search input{flex:1;border:none;padding:11px 16px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;background:#fff;}
+.map-overlay-search button{background:var(--red);color:#fff;border:none;padding:0 18px;cursor:pointer;font-size:16px;font-weight:700;transition:background .2s;}
+.map-overlay-search button:hover{background:var(--red-dk);}
+.map-search-results{position:absolute;top:56px;left:50%;transform:translateX(-50%);z-index:1001;width:clamp(260px,55%,480px);background:#fff;border-radius:0 0 8px 8px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.3);display:none;}
+.map-search-results .ri{padding:10px 16px;font-size:13px;cursor:pointer;border-bottom:1px solid #f1f5f9;transition:background .15s;}
+.map-search-results .ri:last-child{border:none;}.map-search-results .ri:hover{background:#fff5f5;}
+.map-search-results .ri strong{display:block;font-size:13px;}.map-search-results .ri span{color:var(--muted);font-size:11px;}
+.map-toolbar{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:6px;background:rgba(10,14,26,.88);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:8px 10px;box-shadow:0 4px 24px rgba(0,0,0,.5);}
+.mtbtn{display:flex;flex-direction:column;align-items:center;gap:3px;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.13);border-radius:8px;padding:8px 14px;cursor:pointer;color:#e2e8f0;font-size:11px;font-family:'Barlow',sans-serif;font-weight:600;transition:all .2s;min-width:60px;}
+.mtbtn .micon{font-size:18px;line-height:1;}.mtbtn:hover{background:rgba(192,57,43,.4);border-color:var(--red);}
+.mtbtn.active{background:var(--red);border-color:var(--red);color:#fff;}
+.mtbtn.mdanger{border-color:rgba(231,76,60,.5);color:#fca5a5;}.mtbtn.mdanger:hover{background:rgba(231,76,60,.3);}
+#map-main{height:460px;width:100%;display:block;}
+.area-stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px;}
+.area-stat{background:var(--bg);border-radius:8px;padding:13px 16px;border:1.5px solid var(--border);}
+.area-stat .as-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.area-stat .as-value{font-size:18px;font-weight:700;color:var(--dark);margin-top:3px;}
+.area-stat .as-value.filled{color:var(--green);}
+.area-stat .as-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.area-fields-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+.geojson-box{background:#0d1117;border:1px solid #2d333b;border-radius:8px;padding:10px 14px;font-size:10px;font-family:'Courier New',monospace;color:#7ee787;max-height:88px;overflow-y:auto;word-break:break-all;white-space:pre-wrap;margin-top:12px;}
+.cub-info{background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;padding:14px;margin-top:12px;}
+.cub-val{font-size:22px;font-weight:700;color:var(--yellow);}.cub-desc-text{font-size:12px;color:var(--muted);margin-top:2px;}
+.nav-bar{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);}
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:8px;cursor:pointer;font-family:'Barlow',sans-serif;font-weight:600;font-size:14px;padding:11px 22px;transition:all .2s;}
+.btn-primary{background:var(--red);color:#fff;}.btn-primary:hover{background:var(--red-dk);transform:translateY(-1px);}
+.btn-primary:disabled{background:#c4c9d4;cursor:not-allowed;transform:none;}
+.btn-secondary{background:transparent;color:var(--muted);border:1.5px solid var(--border);}.btn-secondary:hover{border-color:var(--muted);color:var(--text);}
+.btn-success{background:var(--green);color:#fff;}.btn-success:hover{background:#15803d;}
+.btn-success:disabled{background:#c4c9d4;cursor:not-allowed;}
+.review-section-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--dark);background:var(--bg);border-radius:6px;padding:10px 14px;margin:14px 0 4px;}
+.review-table{width:100%;border-collapse:collapse;font-size:13px;}
+.review-table tr{border-bottom:1px solid var(--border);}.review-table tr:last-child{border:none;}
+.review-table td{padding:9px 14px;}.review-table td:first-child{color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;width:40%;}
+#success-screen{display:none;text-align:center;padding:60px 24px;}
+.success-icon{font-size:64px;margin-bottom:16px;}
+#success-screen h2{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--green);margin-bottom:8px;}
+#success-screen p{font-size:15px;color:var(--muted);max-width:420px;margin:0 auto 28px;}
+.success-details{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:20px;max-width:500px;margin:0 auto 28px;text-align:left;}
+.success-details .row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #dcfce7;}
+.success-details .row:last-child{border:none;}.success-details .row span{color:var(--muted);}.success-details .row strong{color:var(--text);}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:#fff;border-radius:8px;padding:12px 20px;font-size:13px;box-shadow:0 8px 32px rgba(0,0,0,.25);z-index:9999;transform:translateX(200%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);border-left:4px solid var(--green);max-width:320px;}
+#toast.show{transform:translateX(0);}#toast.error{border-color:#e74c3c;}#toast.warn{border-color:var(--yellow);}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:12px 20px;background:#fff;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-family:'Barlow',sans-serif;font-size:14px;font-weight:600;color:var(--text);transition:all .2s;box-shadow:0 1px 6px rgba(0,0,0,0.08);}
+.google-btn:hover{border-color:#aaa;box-shadow:0 2px 10px rgba(0,0,0,0.12);}
+.google-btn:disabled{opacity:.6;cursor:not-allowed;}
+.google-btn svg{flex-shrink:0;}
+@media(max-width:640px){.field-grid.cols-2,.field-grid.cols-3{grid-template-columns:1fr;}.area-stats-row{grid-template-columns:1fr 1fr;}.area-fields-row{grid-template-columns:1fr;}.form-container{padding:0 12px 80px;}.card-body{padding:16px;}#map-main{height:320px;}.map-toolbar{flex-wrap:wrap;width:90%;}}
+</style>
+</head>
+<body>
+<header class="page-header">
+  <div class="header-stripe"></div>
+  <div class="header-body">
+    <div class="header-logo">🔥</div>
+    <div class="header-title"><h1>SIVS — Sistema Institucional de Valor Salvo</h1><p>Corpo de Bombeiros Militar do Rio Grande do Sul</p></div>
+    <div class="header-badge"><strong id="hdate">—</strong>Preenchimento</div>
+  </div>
+</header>
+<div class="progress-wrap" id="progress-wrap" style="display:none;">
+  <div class="progress-steps">
+    <div class="step active" data-step="1" onclick="goStep(1)"><div class="step-circle">1</div><div class="step-label">Identificação</div></div>
+    <div class="step-line" id="line12"></div>
+    <div class="step" data-step="2" onclick="goStep(2)"><div class="step-circle">2</div><div class="step-label">Ocorrência</div></div>
+    <div class="step-line" id="line23"></div>
+    <div class="step" data-step="3" onclick="goStep(3)"><div class="step-circle">3</div><div class="step-label">Valor Salvo</div></div>
+    <div class="step-line" id="line34"></div>
+    <div class="step" data-step="4" onclick="goStep(4)"><div class="step-circle">4</div><div class="step-label">CUB / Fatores</div></div>
+    <div class="step-line" id="line45"></div>
+    <div class="step" data-step="5" onclick="goStep(5)"><div class="step-circle">5</div><div class="step-label">Revisão</div></div>
+  </div>
+</div>
+<!-- TELA DE ACESSO -->
+<div id="login-screen" style="max-width:420px;margin:60px auto;padding:0 20px;">
+  <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;">
+    <div style="background:var(--dark);padding:28px;text-align:center;">
+      <div style="font-size:44px;margin-bottom:10px;">🔥</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:#fff;letter-spacing:.3px;">SIVS — Acesso ao Sistema</div>
+      <div style="font-size:11px;color:#8892a4;margin-top:6px;text-transform:uppercase;letter-spacing:.5px;">Corpo de Bombeiros Militar do RS</div>
+    </div>
+    <div style="padding:32px;">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.7;text-align:center;">Autentique-se com sua conta Google para acessar o sistema. Somente e-mails autorizados têm acesso.</p>
+      <button class="google-btn" id="google-btn" onclick="iniciarLoginGoogle()">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#4285F4" d="M45.12 24.5c0-1.57-.14-3.08-.4-4.54H24v8.59h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.21z"/><path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/><path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/></svg>
+        <span id="google-btn-label">Entrar com Google</span>
+      </button>
+      <div id="login-erro" style="display:none;margin-top:16px;background:#fff5f5;border:1.5px solid #fca5a5;border-radius:8px;padding:12px 14px;font-size:13px;color:#991b1b;line-height:1.6;text-align:center;"></div>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);text-align:center;line-height:1.6;">
+        Ao entrar, sua identidade Google será verificada.<br/>Sem acesso? Contate o administrador do sistema.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="form-container" id="form-container" style="display:none;">
+<!-- ETAPA 1 -->
+<div class="section-card active" id="step-1">
+  <div class="card-header"><span class="icon">👤</span><h2>Identificação do Preenchedor</h2><span class="step-tag">Etapa 1 de 5</span></div>
+  <div class="card-body">
+    <div class="field-grid cols-2">
+      <div class="field"><label>Nome Completo <span class="req">*</span></label><input type="text" id="f-nome" placeholder="Ex.: Sd. João da Silva"/></div>
+      <div class="field"><label>E-mail Institucional <span class="req">*</span></label><input type="email" id="f-email" placeholder="usuario@cbm.rs.gov.br"/></div>
+      <div class="field"><label>Data de Preenchimento</label><input type="datetime-local" id="f-datahora"/></div>
+      <div class="field"><label>Unidade / OBM</label><input type="text" id="f-unidade" placeholder="Ex.: 1º BBM — Porto Alegre"/></div>
+    </div>
+    <div class="nav-bar"><span></span><button class="btn btn-primary" onclick="nextStep(1)">Próximo ›</button></div>
+  </div>
+</div>
+<!-- ETAPA 2 -->
+<div class="section-card" id="step-2">
+  <div class="card-header"><span class="icon">🚨</span><h2>Dados da Ocorrência</h2><span class="step-tag">Etapa 2 de 5</span></div>
+  <div class="card-body">
+    <div class="field-grid cols-2">
+      <div class="field"><label>Número da Ocorrência (e-193) <span class="req">*</span></label><input type="text" id="f-ocorrencia" placeholder="Ex.: 901927"/></div>
+      <div class="field"><label>Pessoas Retiradas do Local</label><input type="number" id="f-retiradas" min="0" placeholder="0"/></div>
+    </div>
+    <div class="divider"></div>
+    <div class="field" style="margin-bottom:16px">
+      <label>Houve Óbitos? <span class="req">*</span></label>
+      <div class="radio-group">
+        <label class="radio-opt"><input type="radio" name="obitos" value="NÃO" checked/><span class="radio-dot"></span>Não</label>
+        <label class="radio-opt"><input type="radio" name="obitos" value="SIM"/><span class="radio-dot"></span>Sim</label>
+      </div>
+    </div>
+    <div class="obitos-grid" id="obitos-detail" style="display:none">
+      <h4>🔴 Detalhamento de Óbitos</h4>
+      <div class="field-grid cols-2">
+        <div class="field"><label>Masculino (adulto)</label><input type="number" id="f-ob-masc" min="0" placeholder="0"/></div>
+        <div class="field"><label>Feminino (adulto)</label><input type="number" id="f-ob-fem" min="0" placeholder="0"/></div>
+        <div class="field"><label>Criança Masculino</label><input type="number" id="f-ob-criancaM" min="0" placeholder="0"/></div>
+        <div class="field"><label>Criança Feminino</label><input type="number" id="f-ob-criancaF" min="0" placeholder="0"/></div>
+      </div>
+    </div>
+    <div class="nav-bar"><button class="btn btn-secondary" onclick="prevStep(2)">‹ Anterior</button><button class="btn btn-primary" onclick="nextStep(2)">Próximo ›</button></div>
+  </div>
+</div>
+<!-- ETAPA 3 -->
+<div class="section-card" id="step-3">
+  <div class="card-header"><span class="icon">🛰️</span><h2>Valor Salvo — Delimitação da Área no Satélite</h2><span class="step-tag">Etapa 3 de 5</span></div>
+  <div class="card-body">
+    <div class="field" style="margin-bottom:20px">
+      <label>Tipo de Valor Salvo <span class="req">*</span></label>
+      <div class="radio-group">
+        <label class="radio-opt"><input type="radio" name="tipovs" value="Valor Salvo Direto (VSD)" checked/><span class="radio-dot"></span>VSD — Direto</label>
+        <label class="radio-opt"><input type="radio" name="tipovs" value="Valor Salvo Indireto (VSI)"/><span class="radio-dot"></span>VSI — Indireto</label>
+        <label class="radio-opt"><input type="radio" name="tipovs" value="Valor Salvo em Infraestrutura (VSINF)"/><span class="radio-dot"></span>VSINF — Infraestrutura</label>
+      </div>
+    </div>
+    <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#1e40af;line-height:1.7;">
+      <strong>📐 Como delimitar a área:</strong> Busque o endereço no campo acima, depois <strong>clique em cada vértice (canto) do imóvel</strong> no mapa. Os pontos se unem automaticamente formando o polígono. <strong>Duplo clique</strong> no último ponto para fechar e calcular a área. Use <em>Desfazer ponto</em> para corrigir e <em>Limpar</em> para recomeçar.
+    </div>
+    <div class="map-wrapper">
+      <div class="map-overlay-search"><input id="map-search" type="text" placeholder="🔍  Buscar endereço do imóvel..."/><button onclick="doMapSearch()">›</button></div>
+      <div class="map-search-results" id="map-results"></div>
+      <div id="map-main"></div>
+      <div class="map-toolbar">
+        <button class="mtbtn" id="mtbtn-draw" onclick="startDrawing()"><span class="micon">✏️</span>Desenhar área</button>
+        <button class="mtbtn" id="mtbtn-undo" onclick="undoPoint()" style="display:none"><span class="micon">↩️</span>Desfazer ponto</button>
+        <button class="mtbtn mdanger" onclick="clearMap()"><span class="micon">🗑</span>Limpar</button>
+      </div>
+    </div>
+    <div class="area-stats-row">
+      <div class="area-stat"><div class="as-label">Área calculada</div><div class="as-value filled" id="mstat-area">—</div><div class="as-sub">metros quadrados (m²)</div></div>
+      <div class="area-stat"><div class="as-label">Perímetro</div><div class="as-value" id="mstat-perim">—</div><div class="as-sub">metros (m)</div></div>
+      <div class="area-stat"><div class="as-label">Polígonos</div><div class="as-value" id="mstat-count">0</div><div class="as-sub">geometrias registradas</div></div>
+    </div>
+    <div class="area-fields-row">
+      <div class="field">
+        <label>Área TOTAL (m²) <span class="req">*</span><span class="auto-badge">⚡ Auto-preenchido</span></label>
+        <input type="number" id="f-areatotal" readonly placeholder="Delimite no mapa acima"/>
+        <span class="hint">Calculado automaticamente pelo polígono desenhado.</span>
+      </div>
+      <div class="field">
+        <label>Área PRESERVADA (m²) <span class="req">*</span></label>
+        <input type="number" id="f-areapreservada" min="0" step="0.01" placeholder="Digite manualmente..."/>
+        <span class="hint">Informe a área preservada. Deve ser ≤ Área Total.</span>
+      </div>
+    </div>
+    <div class="geojson-box" id="geojson-preview">// GeoJSON gerado automaticamente após delimitar a área...</div>
+    <div class="nav-bar"><button class="btn btn-secondary" onclick="prevStep(3)">‹ Anterior</button><button class="btn btn-primary" onclick="nextStep(3)">Próximo ›</button></div>
+  </div>
+</div>
+<!-- ETAPA 4 -->
+<div class="section-card" id="step-4">
+  <div class="card-header"><span class="icon">📊</span><h2>CUB e Fatores de Cálculo</h2><span class="step-tag">Etapa 4 de 5</span></div>
+  <div class="card-body">
+    <div class="field" style="margin-bottom:18px">
+      <label>Tipo de CUB <span class="req">*</span></label>
+      <div class="radio-group">
+        <label class="radio-opt"><input type="radio" name="tipocub" value="Residencial" checked/><span class="radio-dot"></span>Residencial</label>
+        <label class="radio-opt"><input type="radio" name="tipocub" value="Comercial"/><span class="radio-dot"></span>Comercial</label>
+      </div>
+    </div>
+    <div id="cub-res-wrap" class="field" style="margin-bottom:18px">
+      <label>CUB Residencial <span class="req">*</span></label>
+      <select id="f-cub-res">
+        <option value="">— Selecione —</option>
+        <option value="R-1 B|2443.87">R-1 Baixo Padrão — R$ 2.443,87/m²</option>
+        <option value="R-1 N|3260.42">R-1 Padrão Normal — R$ 3.260,42/m²</option>
+        <option value="R-1 A|4390.59">R-1 Alto Padrão — R$ 4.390,59/m²</option>
+        <option value="PP-4 B|2322.98">PP-4 Baixo Padrão — R$ 2.322,98/m²</option>
+        <option value="PP-4 N|3188.70">PP-4 Padrão Normal — R$ 3.188,70/m²</option>
+        <option value="R-8 B|2202.59">R-8 Baixo Padrão — R$ 2.202,59/m²</option>
+        <option value="R-8 N|2771.11">R-8 Padrão Normal — R$ 2.771,11/m²</option>
+        <option value="R-8 A|3561.63">R-8 Alto Padrão — R$ 3.561,63/m²</option>
+        <option value="R-16 N|2714.41">R-16 Padrão Normal — R$ 2.714,41/m²</option>
+        <option value="R-16 A|3625.73">R-16 Alto Padrão — R$ 3.625,73/m²</option>
+        <option value="PIS|1782.22">PIS — R$ 1.782,22/m²</option>
+        <option value="RPQ1|2508.82">Residência Popular — R$ 2.508,82/m²</option>
+        <option value="R-16+A|3988.30">Multifamiliar 16–20 pav. — R$ 3.988,30/m²</option>
+        <option value="R-21-30A|4532.16">Multifamiliar 21–30 pav. — R$ 4.532,16/m²</option>
+        <option value="R-31-40A|4894.74">Multifamiliar 31–40 pav. — R$ 4.894,74/m²</option>
+        <option value="R-41-50A|5438.60">Multifamiliar 41–50 pav. — R$ 5.438,60/m²</option>
+      </select>
+    </div>
+    <div id="cub-com-wrap" class="field" style="margin-bottom:18px;display:none">
+      <label>CUB Comercial <span class="req">*</span></label>
+      <select id="f-cub-com">
+        <option value="">— Selecione —</option>
+        <option value="CAL-8 N|3602.26">CAL-8 Padrão Normal — R$ 3.602,26/m²</option>
+        <option value="CAL-8 A|4183.34">CAL-8 Alto Padrão — R$ 4.183,34/m²</option>
+        <option value="CSL-8 N|2747.09">CSL-8 Padrão Normal — R$ 2.747,09/m²</option>
+        <option value="CSL-8 A|3249.91">CSL-8 Alto Padrão — R$ 3.249,91/m²</option>
+        <option value="CSL-16 N|3707.68">CSL-16 Padrão Normal — R$ 3.707,68/m²</option>
+        <option value="CSL-16 A|4378.09">CSL-16 Alto Padrão — R$ 4.378,09/m²</option>
+        <option value="GI|1357.71">Galpão Industrial — R$ 1.357,71/m²</option>
+      </select>
+    </div>
+    <div class="cub-info" id="cub-info-box" style="display:none">
+      <div class="cub-val" id="cub-info-val">—</div>
+      <div class="cub-desc-text" id="cub-info-desc">Valor do CUB selecionado (R$/m²)</div>
+    </div>
+    <div class="divider"></div>
+    <div class="field-grid cols-3">
+      <div class="field">
+        <label>Fator de Completude <span class="req">*</span></label>
+        <select id="f-completude">
+          <option value="">— Selecione —</option>
+          <option value="Obra Simples|1.2">Obra Simples — 1,2</option>
+          <option value="Obra Padrão Urbana|1.3">Obra Padrão Urbana — 1,3</option>
+          <option value="Área Urbana Consolidada|1.4">Área Urbana Consolidada — 1,4</option>
+          <option value="Alto Padrão|1.5">Alto Padrão / Alta Complexidade — 1,5</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Fator Cidade <span class="req">*</span></label>
+        <select id="f-cidade">
+          <option value="">— Selecione —</option>
+          <option value="Capital Estadual|1.1">Capital Estadual — 1,1</option>
+          <option value="Região Metropolitana|1.05">Região Metropolitana — 1,05</option>
+          <option value="Município de Porte Médio|1.0">Porte Médio — 1,0</option>
+          <option value="Município de Pequeno Porte|0.95">Pequeno Porte — 0,95</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Fator Bairro <span class="req">*</span></label>
+        <select id="f-bairro">
+          <option value="">— Selecione —</option>
+          <option value="Área Industrial|0.95">Área Industrial — 0,95</option>
+          <option value="Bairro de Padrão Médio|1.0">Padrão Médio ou Misto — 1,0</option>
+          <option value="Bairro Residencial Consolidado|1.05">Residencial Consolidado — 1,05</option>
+          <option value="Bairro Nobre|1.1">Bairro Nobre / Alta Complexidade — 1,1</option>
+        </select>
+      </div>
+    </div>
+    <div class="nav-bar"><button class="btn btn-secondary" onclick="prevStep(4)">‹ Anterior</button><button class="btn btn-primary" onclick="nextStep(4)">Próximo ›</button></div>
+  </div>
+</div>
+<!-- ETAPA 5 -->
+<div class="section-card" id="step-5">
+  <div class="card-header"><span class="icon">✅</span><h2>Revisão e Envio</h2><span class="step-tag">Etapa 5 de 5</span></div>
+  <div class="card-body">
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Confira todos os dados antes de enviar ao Google Sheets do SIVS.</p>
+    <div id="review-content"></div>
+    <div class="nav-bar">
+      <button class="btn btn-secondary" onclick="prevStep(5)">‹ Anterior</button>
+      <button class="btn btn-success" id="btn-enviar" onclick="submitForm()"><span id="submit-label">📤 Enviar ao Google Sheets</span></button>
+    </div>
+  </div>
+</div>
+<!-- SUCESSO -->
+<div id="success-screen">
+  <div class="success-icon">✅</div>
+  <h2>Registro Enviado!</h2>
+  <p>Dados salvos com sucesso no Google Sheets do SIVS.</p>
+  <div class="success-details" id="success-details"></div>
+  <button class="btn btn-primary" onclick="location.reload()">➕ Novo Registro</button>
+</div>
+</div>
+
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script>
+// ══════════════════════════════════════════════════════
+// CONFIGURAÇÃO — substitua pelo seu Client ID do Google
+// Obter em: console.cloud.google.com → APIs e Serviços → Credenciais
+// ══════════════════════════════════════════════════════
+const GOOGLE_CLIENT_ID = 'SEU_CLIENT_ID_AQUI.apps.googleusercontent.com';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyQw8D5AhpmLDpWe-qBDcOlG9LSRrx13X9kLK4L_9X-mYNEe01IogAX7d9Qdg_EBkGacg/exec';
+
+let usuarioAtual = null; // null = ninguém autenticado
+
+// ── Garante que o formulário nunca aparece sem autenticação ──
+// Esconde tudo no carregamento — só o login-screen é visível
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('progress-wrap').style.display   = 'none';
+  document.getElementById('form-container').style.display  = 'none';
+  const now = new Date();
+  document.getElementById('f-datahora').value = now.toISOString().slice(0,16);
+  document.getElementById('hdate').textContent = now.toLocaleDateString('pt-BR');
+});
+
+// ── Inicializa Google Identity Services ─────────────────────
+window.addEventListener('load', () => {
+  if (typeof google === 'undefined') {
+    mostrarErroLogin('Falha ao carregar autenticação Google. Verifique sua conexão com a internet.');
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id:           GOOGLE_CLIENT_ID,
+    callback:            onGoogleToken,
+    auto_select:         false,   // NUNCA seleciona conta automaticamente
+    cancel_on_tap_outside: true,
+    ux_mode:             'popup'  // popup — sem redirecionamento
+  });
+});
+
+// ── Botão "Entrar com Google" ────────────────────────────────
+function iniciarLoginGoogle() {
+  if (typeof google === 'undefined') {
+    mostrarErroLogin('Autenticação Google indisponível. Verifique sua conexão.');
+    return;
+  }
+  if (GOOGLE_CLIENT_ID.startsWith('SEU_CLIENT')) {
+    mostrarErroLogin('⚠️ Client ID do Google não configurado. Contate o administrador do sistema.');
+    return;
+  }
+  const btn = document.getElementById('google-btn');
+  btn.disabled = true;
+  document.getElementById('google-btn-label').innerHTML = '<span class="spinner" style="border-top-color:#555"></span> Aguardando Google...';
+  document.getElementById('login-erro').style.display = 'none';
+
+  google.accounts.id.prompt(notification => {
+    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+      // Se o prompt automático foi bloqueado, renderiza o botão padrão do Google
+      google.accounts.id.renderButton(
+        document.getElementById('google-btn'),
+        { theme:'outline', size:'large', text:'signin_with', locale:'pt-BR', width:340 }
+      );
+      btn.disabled = false;
+      document.getElementById('google-btn-label').textContent = 'Entrar com Google';
+    }
+  });
+}
+
+// ── Callback: chamado após autenticação Google ───────────────
+async function onGoogleToken(response) {
+  const btn = document.getElementById('google-btn');
+  btn.disabled = true;
+  document.getElementById('google-btn-label').innerHTML = '<span class="spinner" style="border-top-color:#555"></span> Verificando acesso...';
+  document.getElementById('login-erro').style.display = 'none';
+
+  try {
+    // Decodifica JWT (payload base64url) — sem biblioteca externa
+    const payload = JSON.parse(
+      atob(response.credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))
+    );
+    const emailGoogle = payload.email;
+    const nomeGoogle  = payload.name;
+
+    // Revoga imediatamente — sem cache de sessão no Google
+    google.accounts.id.revoke(emailGoogle, () => {});
+
+    // ── Consulta a planilha para verificar acesso ────────────
+    const url  = SCRIPT_URL + '?action=verificar&email=' + encodeURIComponent(emailGoogle);
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.allowed === true) {
+      // Salva usuário autenticado em memória (não em localStorage/cookie)
+      usuarioAtual = {
+        email:   emailGoogle,
+        nome:    data.user.nome    || nomeGoogle,
+        unidade: data.user.unidade || ''
+      };
+
+      // Libera o formulário
+      document.getElementById('login-screen').style.display  = 'none';
+      document.getElementById('progress-wrap').style.display = '';
+      document.getElementById('form-container').style.display = '';
+
+      // Pré-preenche e bloqueia os campos de identificação
+      const fe = document.getElementById('f-email');
+      const fn = document.getElementById('f-nome');
+      const fu = document.getElementById('f-unidade');
+      fe.value = usuarioAtual.email;   fe.setAttribute('readonly', true);
+      fn.value = usuarioAtual.nome;    fn.setAttribute('readonly', true);
+      fu.value = usuarioAtual.unidade; fu.setAttribute('readonly', true);
+
+    } else {
+      // Acesso negado — mantém tela de login
+      usuarioAtual = null;
+      const msgs = {
+        bloqueado:      '🚫 Sua conta está desativada. Entre em contato com o administrador.',
+        nao_cadastrado: '🚫 A conta <strong>' + emailGoogle + '</strong> não está autorizada neste sistema. Solicite acesso ao administrador.'
+      };
+      mostrarErroLogin(msgs[data.reason] || '🚫 Acesso não autorizado.');
+      btn.disabled = false;
+      document.getElementById('google-btn-label').textContent = 'Tentar com outra conta';
+    }
+
+  } catch(err) {
+    usuarioAtual = null;
+    mostrarErroLogin('Erro ao verificar acesso. Tente novamente.');
+    btn.disabled = false;
+    document.getElementById('google-btn-label').textContent = 'Entrar com Google';
+  }
+}
+
+function mostrarErroLogin(msg) {
+  const el = document.getElementById('login-erro');
+  el.innerHTML = msg;
+  el.style.display = 'block';
+}
+
+// ── Verificação de sessão ativa antes de qualquer ação ───────
+function sessionGuard() {
+  if (!usuarioAtual) {
+    // Esconde tudo e volta para login
+    document.getElementById('progress-wrap').style.display  = 'none';
+    document.getElementById('form-container').style.display = 'none';
+    document.getElementById('login-screen').style.display   = '';
+    mostrarErroLogin('Sessão expirada. Faça login novamente.');
+    return false;
+  }
+  return true;
+}
+
+window.addEventListener('DOMContentLoaded',()=>{const now=new Date();document.getElementById('f-datahora').value=now.toISOString().slice(0,16);document.getElementById('hdate').textContent=now.toLocaleDateString('pt-BR');});
+function showToast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className='show'+(type==='error'?' error':type==='warn'?' warn':'');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3500);}
+let currentStep=1;
+function goStep(n){if(n<=currentStep)showStep(n);}
+function showStep(n){document.querySelectorAll('.section-card').forEach(c=>c.classList.remove('active'));const card=document.getElementById('step-'+n);if(card){card.classList.add('active');setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),50);}currentStep=n;updateProgress();if(n===3)initMap();if(n===5)buildReview();}
+function updateProgress(){for(let i=1;i<=5;i++){const el=document.querySelector(`.step[data-step="${i}"]`);if(!el)continue;el.classList.remove('active','done');if(i<currentStep)el.classList.add('done');if(i===currentStep)el.classList.add('active');}[[1,2],[2,3],[3,4],[4,5]].forEach(([a,b])=>{const ln=document.getElementById('line'+a+b);if(ln)ln.classList.toggle('done',a<currentStep);});}
+function validateStep(n){const req={1:[['f-nome','Nome obrigatório.'],['f-email','E-mail obrigatório.']],2:[['f-ocorrencia','Número da ocorrência obrigatório.']]};let ok=true;(req[n]||[]).forEach(([id,msg])=>{const el=document.getElementById(id);if(!el||!el.value.trim()){if(el)el.classList.add('error');showToast(msg,'error');ok=false;}else el.classList.remove('error');});if(n===3){if(!document.getElementById('f-areatotal').value){showToast('Delimite a área no mapa satélite.','warn');ok=false;}else if(!document.getElementById('f-areapreservada').value){showToast('Preencha a Área Preservada.','error');ok=false;}else{const tot=parseFloat(document.getElementById('f-areatotal').value),pre=parseFloat(document.getElementById('f-areapreservada').value);if(pre>tot){showToast('Área Preservada não pode ser maior que a Área Total.','error');ok=false;}}}if(n===4){const tipo=document.querySelector('input[name="tipocub"]:checked').value;const cub=tipo==='Residencial'?document.getElementById('f-cub-res').value:document.getElementById('f-cub-com').value;if(!cub){showToast('Selecione o CUB.','error');return false;}if(!document.getElementById('f-completude').value){showToast('Selecione o Fator de Completude.','error');return false;}if(!document.getElementById('f-cidade').value){showToast('Selecione o Fator Cidade.','error');return false;}if(!document.getElementById('f-bairro').value){showToast('Selecione o Fator Bairro.','error');return false;}}return ok;}
+function nextStep(n){if(!validateStep(n))return;showStep(n+1);}function prevStep(n){showStep(n-1);}
+document.querySelectorAll('input[name="obitos"]').forEach(r=>{r.addEventListener('change',()=>{document.getElementById('obitos-detail').style.display=r.value==='SIM'?'block':'none';});});
+document.querySelectorAll('input[name="tipocub"]').forEach(r=>{r.addEventListener('change',()=>{const isRes=r.value==='Residencial';document.getElementById('cub-res-wrap').style.display=isRes?'':'none';document.getElementById('cub-com-wrap').style.display=isRes?'none':'';document.getElementById('cub-info-box').style.display='none';});});
+function getCubValue(){const tipo=document.querySelector('input[name="tipocub"]:checked').value;const sel=tipo==='Residencial'?document.getElementById('f-cub-res'):document.getElementById('f-cub-com');if(!sel.value)return null;const[desc,val]=sel.value.split('|');return{desc,val:parseFloat(val)};}
+function onCubChange(){const c=getCubValue();const box=document.getElementById('cub-info-box');if(c){box.style.display='';document.getElementById('cub-info-val').textContent='R$ '+c.val.toLocaleString('pt-BR',{minimumFractionDigits:2});document.getElementById('cub-info-desc').textContent=c.desc+' — R$/m²';}else box.style.display='none';}
+document.getElementById('f-cub-res').addEventListener('change',onCubChange);document.getElementById('f-cub-com').addEventListener('change',onCubChange);
+let map,drawnItems,drawHandler,currentGeoJSON=null,mapInited=false;
+function initMap(){if(mapInited)return;mapInited=true;const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:21});const lbl=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:21,opacity:.85});const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19});map=L.map('map-main',{center:[-30.0346,-51.2177],zoom:16,layers:[sat,lbl]});L.control.layers({'🛰️ Satélite':sat,'🗺️ Mapa OSM':osm},{'🏷️ Rótulos':lbl},{position:'topright',collapsed:false}).addTo(map);drawnItems=new L.FeatureGroup().addTo(map);const dc=new L.Control.Draw({edit:{featureGroup:drawnItems,remove:true},draw:false});map.addControl(dc);map.on(L.Draw.Event.CREATED,e=>{drawnItems.addLayer(e.layer);drawHandler=null;setDrawBtn(false);updateMapStats();showToast('Área delimitada! Área Total preenchida automaticamente.');});map.on(L.Draw.Event.EDITED,updateMapStats);map.on(L.Draw.Event.DELETED,()=>{updateMapStats();if(drawnItems.getLayers().length===0){const f=document.getElementById('f-areatotal');f.value='';f.style.borderColor='';f.style.background='';}});if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>map.flyTo([p.coords.latitude,p.coords.longitude],18,{duration:1.5}),()=>{});}
+function setDrawBtn(drawing){const btn=document.getElementById('mtbtn-draw');const undo=document.getElementById('mtbtn-undo');if(drawing){btn.classList.add('active');btn.querySelector('.micon').textContent='⏹️';btn.querySelector('span:last-child') && (btn.lastChild.textContent='');btn.childNodes[1] && (btn.childNodes[1].nodeValue='Cancelar');undo.style.display='flex';}else{btn.classList.remove('active');btn.querySelector('.micon').textContent='✏️';undo.style.display='none';}
+// update label properly
+btn.innerHTML = drawing ? '<span class="micon">⏹️</span>Cancelar' : '<span class="micon">✏️</span>Desenhar área';}
+function startDrawing(){if(!map)return;if(drawHandler){drawHandler.disable();drawHandler=null;setDrawBtn(false);return;}const opts={color:'#e74c3c',fillColor:'#c0392b',fillOpacity:.2,weight:2.5};drawHandler=new L.Draw.Polygon(map,{shapeOptions:opts,showArea:true,metric:true,allowIntersection:false,repeatMode:false,icon:new L.DivIcon({iconSize:new L.Point(8,8),className:'leaflet-div-icon leaflet-editing-icon'})});drawHandler.enable();setDrawBtn(true);}
+function undoPoint(){if(drawHandler&&drawHandler._markers&&drawHandler._markers.length>0){drawHandler.deleteLastVertex();}}
+function clearMap(){if(!map)return;if(drawHandler){drawHandler.disable();drawHandler=null;setDrawBtn(false);}if(drawnItems.getLayers().length===0&&!confirm)return;if(drawnItems.getLayers().length>0&&!confirm('Limpar a área desenhada?'))return;drawnItems.clearLayers();updateMapStats();showToast('Mapa limpo.','warn');}
+function polyArea(ll){const pts=ll[0]??ll;let a=0;const n=pts.length,R=6371000;for(let i=0;i<n;i++){const j=(i+1)%n;const xi=pts[i].lng*Math.PI/180*R*Math.cos(pts[i].lat*Math.PI/180),yi=pts[i].lat*Math.PI/180*R,xj=pts[j].lng*Math.PI/180*R*Math.cos(pts[j].lat*Math.PI/180),yj=pts[j].lat*Math.PI/180*R;a+=(xi*yj-xj*yi);}return Math.abs(a/2);}
+function polyPerim(ll){const pts=ll[0]??ll;let p=0;for(let i=0;i<pts.length;i++)p+=map.distance(pts[i],pts[(i+1)%pts.length]);return p;}
+function fmtN(n){return n.toLocaleString('pt-BR',{maximumFractionDigits:2});}
+function updateMapStats(){let tA=0,tP=0,cnt=0;const gj={type:'FeatureCollection',features:[]};drawnItems.eachLayer(layer=>{cnt++;const ll=layer.getLatLngs?layer.getLatLngs():[];const a=polyArea(ll),p=polyPerim(ll);tA+=a;tP+=p;gj.features.push({type:'Feature',geometry:layer.toGeoJSON().geometry,properties:{area_m2:Math.round(a),perimetro_m:Math.round(p)}});});document.getElementById('mstat-area').textContent=cnt?fmtN(tA)+' m²':'—';document.getElementById('mstat-perim').textContent=cnt?fmtN(tP)+' m':'—';document.getElementById('mstat-count').textContent=cnt;const af=document.getElementById('f-areatotal');if(cnt>0){af.value=Math.round(tA*100)/100;af.style.borderColor='#16a34a';af.style.background='#f0fdf4';}else{af.value='';af.style.borderColor='';af.style.background='';}currentGeoJSON=cnt?gj:null;document.getElementById('geojson-preview').textContent=cnt?JSON.stringify(gj,null,2):'// GeoJSON gerado automaticamente após delimitar a área...';}
+async function doMapSearch(){const q=document.getElementById('map-search').value.trim();if(!q||!map)return;try{const res=await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q)+'&limit=5&countrycodes=br',{headers:{'Accept-Language':'pt-BR'}});const data=await res.json();const wrap=document.getElementById('map-results');wrap.innerHTML='';wrap.style.display=data.length?'block':'none';if(!data.length){showToast('Endereço não encontrado.','warn');return;}data.forEach(item=>{const d=document.createElement('div');d.className='ri';const parts=item.display_name.split(',');d.innerHTML='<strong>'+parts[0].trim()+'</strong><span>'+parts.slice(1,3).join(',').trim()+'</span>';d.onclick=()=>{map.flyTo([parseFloat(item.lat),parseFloat(item.lon)],19,{duration:1.5});wrap.style.display='none';document.getElementById('map-search').value=parts[0].trim();};wrap.appendChild(d);});}catch{showToast('Erro ao buscar endereço.','error');}}
+document.addEventListener('DOMContentLoaded',()=>{document.getElementById('map-search').addEventListener('keydown',e=>{if(e.key==='Enter')doMapSearch();});document.addEventListener('click',e=>{if(!e.target.closest('.map-overlay-search')&&!e.target.closest('#map-results'))document.getElementById('map-results').style.display='none';});});
+function v(id){return(document.getElementById(id)||{}).value||'';}
+function buildReview(){const obitos=document.querySelector('input[name="obitos"]:checked').value;const tipovs=document.querySelector('input[name="tipovs"]:checked').value;const tipocub=document.querySelector('input[name="tipocub"]:checked').value;const cub=getCubValue();const compl=(document.getElementById('f-completude').value||'').split('|');const cid=(document.getElementById('f-cidade').value||'').split('|');const bai=(document.getElementById('f-bairro').value||'').split('|');const sections=[{title:'👤 Identificação',rows:[['Nome',v('f-nome')],['E-mail',v('f-email')],['Data/Hora',v('f-datahora')],['Unidade',v('f-unidade')||'—']]},{title:'🚨 Ocorrência',rows:[['Nº e-193',v('f-ocorrencia')],['Pessoas Retiradas',v('f-retiradas')||'0'],['Óbitos',obitos],...(obitos==='SIM'?[['Óbitos (M/F/CM/CF)',[v('f-ob-masc'),v('f-ob-fem'),v('f-ob-criancaM'),v('f-ob-criancaF')].join(' / ')]]:[]) ]},{title:'🛰️ Valor Salvo & Geometria',rows:[['Tipo Valor Salvo',tipovs],['Área Total (auto)',v('f-areatotal')?v('f-areatotal')+' m²':'⚠️ Não informada'],['Área Preservada',v('f-areapreservada')?v('f-areapreservada')+' m²':'⚠️ Não informada'],['Geometrias',currentGeoJSON?currentGeoJSON.features.length+' geometria(s)':'⚠️ Nenhuma']]},{title:'📊 CUB & Fatores',rows:[['Tipo CUB',tipocub],['CUB',cub?cub.desc:'—'],['Valor CUB',cub?'R$ '+cub.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'/m²':'—'],['Completude',compl[0]||'—'],['Cidade',cid[0]||'—'],['Bairro',bai[0]||'—']]}];document.getElementById('review-content').innerHTML=sections.map(s=>'<div class="review-section-title">'+s.title+'</div><table class="review-table">'+s.rows.map(([k,val])=>'<tr><td>'+k+'</td><td>'+val+'</td></tr>').join('')+'</table>').join('');}
+async function submitForm(){
+if (!sessionGuard()) return;
+const obitos=document.querySelector('input[name="obitos"]:checked').value;const tipovs=document.querySelector('input[name="tipovs"]:checked').value;const tipocub=document.querySelector('input[name="tipocub"]:checked').value;const cub=getCubValue();const compl=(document.getElementById('f-completude').value||'').split('|');const cid=(document.getElementById('f-cidade').value||'').split('|');const bai=(document.getElementById('f-bairro').value||'').split('|');const payload={Nome:v('f-nome'),Email:v('f-email'),DataHora:v('f-datahora'),Unidade:v('f-unidade'),NumeroOcorrencia:v('f-ocorrencia'),PessoasRetiradas:parseInt(v('f-retiradas'))||0,Obitos:obitos,ObitosMasculino:parseInt(v('f-ob-masc'))||0,ObitosFeminino:parseInt(v('f-ob-fem'))||0,ObitosCriancaMasc:parseInt(v('f-ob-criancaM'))||0,ObitosCriancaFem:parseInt(v('f-ob-criancaF'))||0,TipoValorSalvo:tipovs,AreaTotal:parseFloat(v('f-areatotal'))||0,AreaPreservada:parseFloat(v('f-areapreservada'))||0,GeoJSON:currentGeoJSON?JSON.stringify(currentGeoJSON):'',TipoCUB:tipocub,CUBDescricao:cub?cub.desc:'',CUBValor:cub?cub.val:0,FatorCompletude:compl[0]||'',FatorCompletude_N:parseFloat(compl[1])||0,FatorCidade:cid[0]||'',FatorCidade_N:parseFloat(cid[1])||0,FatorBairro:bai[0]||'',FatorBairro_N:parseFloat(bai[1])||0};const btn=document.getElementById('btn-enviar');btn.disabled=true;document.getElementById('submit-label').innerHTML='<span class="spinner"></span> Enviando...';
+// Google Apps Script com no-cors — resposta opaque é comportamento normal
+fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(payload),mode:'no-cors'}).then(()=>showSuccess(payload)).catch(()=>showSuccess(payload));
+setTimeout(()=>{if(document.getElementById('success-screen').style.display==='none')showSuccess(payload);},2000);}
+function showSuccess(p){if(document.getElementById('success-screen').style.display==='block')return;document.querySelectorAll('.section-card').forEach(c=>c.style.display='none');document.querySelector('.progress-wrap').style.display='none';const sc=document.getElementById('success-screen');sc.style.display='block';sc.scrollIntoView({behavior:'smooth'});document.getElementById('success-details').innerHTML=[['Ocorrência',p.NumeroOcorrencia],['Responsável',p.Nome],['Tipo Valor Salvo',p.TipoValorSalvo],['Área Total',p.AreaTotal+' m²'],['Área Preservada',p.AreaPreservada+' m²'],['Geometrias',currentGeoJSON?currentGeoJSON.features.length+' registrada(s)':'—'],['CUB',p.CUBDescricao||'—'],['Enviado em',new Date().toLocaleString('pt-BR')]].map(([k,val])=>'<div class="row"><span>'+k+'</span><strong>'+val+'</strong></div>').join('');}
+</script>
+</body>
+</html>
