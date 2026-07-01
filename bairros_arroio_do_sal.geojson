@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "bairros_arroio_do_sal",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "code_muni": 4301057.0, "name_muni": "Arroio do Sal", "code_state": 43.0, "abbrev_state": "RS", "name_state": "Rio Grande do Sul", "code_region": 4.0, "name_region": "Sul", "year": 2022.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -49.832743917, -29.481338246 ], [ -49.922164990999896, -29.607172992999899 ], [ -49.961282846, -29.604869215 ], [ -49.986176427, -29.601230472999912 ], [ -49.870163684, -29.447323739999899 ], [ -49.835524458999899, -29.424225266 ], [ -49.80346655684729, -29.443587052685192 ], [ -49.832743917, -29.481338246 ] ] ] } }
+]
+}

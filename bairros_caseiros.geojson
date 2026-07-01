@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "bairros_caseiros",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "Nossa Senhora de Fátima", "code_muni": 4304952.0, "name_muni": "Caseiros" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -51.6902551, -28.2656282 ], [ -51.6903275, -28.2654983 ], [ -51.6905515, -28.2650234 ], [ -51.6907285, -28.2646514 ], [ -51.6909108, -28.2643218 ], [ -51.691049, -28.2641281 ], [ -51.6912653, -28.263887 ], [ -51.691218, -28.2638777 ], [ -51.689496, -28.2636084 ], [ -51.6889918, -28.2653187 ], [ -51.6901773, -28.2655786 ], [ -51.6902551, -28.2656282 ] ] ] } }
+]
+}
