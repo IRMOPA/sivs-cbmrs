@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "bairros_general_camara",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "Princesa Isabel", "code_muni": 4308805.0, "name_muni": "General Câmara" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -51.7429877, -29.9573886 ], [ -51.740061793029113, -29.956349454624547 ], [ -51.742247469999896, -29.957494428 ], [ -51.744865810295266, -29.958267276300504 ], [ -51.7429877, -29.9573886 ] ] ] } },
+{ "type": "Feature", "properties": { "name": "Coqueiros", "code_muni": 4308805.0, "name_muni": "General Câmara" }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ -51.842161684547101, -29.82337385054478 ], [ -51.841691333711445, -29.82350954694045 ], [ -51.8417423, -29.8235906 ], [ -51.842161684547101, -29.82337385054478 ] ] ], [ [ [ -51.848119, -29.8217533 ], [ -51.850581602234179, -29.820944357582704 ], [ -51.845783904025112, -29.822328770817066 ], [ -51.848119, -29.8217533 ] ] ] ] } }
+]
+}
