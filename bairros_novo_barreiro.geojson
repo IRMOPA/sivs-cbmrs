@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "bairros_novo_barreiro",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "Aparecida", "code_muni": 4313490.0, "name_muni": "Novo Barreiro" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -53.0492494, -27.9244864 ], [ -53.048482350386578, -27.923765096809422 ], [ -53.048524525999895, -27.923894552 ], [ -53.049201443795695, -27.92451346751929 ], [ -53.0492494, -27.9244864 ] ] ] } }
+]
+}
